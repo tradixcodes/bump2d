@@ -1,17 +1,14 @@
 function love.load()
 	bump = require("library/bump/bump")
-
 	sti = require("library/Simple-Tiled-Implementation/sti")
+	cameraFile = require("library/hump/camera")
+
+	cam = cameraFile()
+	cam:zoom(2)
 
 	world = bump.newWorld(32)
 
-	player = {
-		x = 100,
-		y = 100,
-		w = 32,
-		h = 32,
-		speed = 200,
-	}
+	require("player")
 
 	platforms = {}
 
@@ -19,30 +16,20 @@ function love.load()
 end
 
 function love.update(dt)
-	local dx, dy = 0, 0
+	playerUpdate(dt)
 
-	if love.keyboard.isDown("d") then
-		dx = player.speed * dt
-	elseif love.keyboard.isDown("a") then
-		dx = -player.speed * dt
-	end
+	local zoomLevel = 2
+	local halfW = (love.graphics.getWidth() / 2) / zoomLevel
+	local halfH = (love.graphics.getHeight() / 2) / zoomLevel
 
-	if love.keyboard.isDown("s") then
-		dy = player.speed * dt
-	elseif love.keyboard.isDown("w") then
-		dy = -player.speed * dt
-	end
+	local camX = math.max(halfW, math.min(player.x, mapWidth - halfW))
+	local camY = math.max(halfH, math.min(player.y, mapHeight - halfH))
 
-	local goalX = player.x + dx
-	local goalY = player.y + dy
-
-	local actualX, actualY, cols, len = world:move(player, goalX, goalY)
-
-	player.x = actualX
-	player.y = actualY
+	cam:lookAt(camX, camY)
 end
 
 function love.draw()
+	cam:attach()
 	gameMap:drawLayer(gameMap.layers["background"])
 	gameMap:drawLayer(gameMap.layers["walls"])
 
@@ -51,6 +38,7 @@ function love.draw()
 	for i, platform in ipairs(platforms) do
 		love.graphics.rectangle("line", platform.x, platform.y, platform.width, platform.height)
 	end
+	cam:detach()
 	love.graphics.printf(
 		"Player Hitbox: " .. math.floor(player.x) .. ", " .. math.floor(player.y),
 		10,
@@ -62,6 +50,7 @@ function love.draw()
 	love.graphics.print("FPS: " .. fps, 10, 20)
 end
 
+-- (Keep your loadMap and spawnPlatform functions as they were)
 function spawnPlatform(x, y, width, height)
 	if width > 0 and height > 0 then
 		local platform = {
