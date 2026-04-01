@@ -32,6 +32,7 @@ function love.draw()
 	cam:attach()
 	gameMap:drawLayer(gameMap.layers["background"])
 	gameMap:drawLayer(gameMap.layers["walls"])
+	gameMap:drawLayer(gameMap.layers["stones"])
 
 	love.graphics.rectangle("fill", player.x, player.y, player.w, player.h)
 
@@ -81,6 +82,10 @@ function loadMap(mapName)
 	world:add(player, player.x, player.y, player.w, player.h)
 
 	for i, obj in pairs(gameMap.layers["Platforms"].objects) do
+		spawnPlatform(obj.x, obj.y, obj.width, obj.height)
+	end
+
+	for i, obj in pairs(gameMap.layers["stones_object"].objects) do 
 		spawnPlatform(obj.x, obj.y, obj.width, obj.height)
 	end
 end
