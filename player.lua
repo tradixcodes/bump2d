@@ -8,24 +8,20 @@ player.moveTimer = 0
 player.startX, player.startY = 0, 0
 player.targetX, player.targetY = 0, 0
 player.isMoving = false
-player.bufferedInput = nil
+player.bufferedInput = {}
 player.animation = nil
 player.flipX = 1
 
 function playerUpdate(dt)
+	-- runs only when player animation is not nil
 	if player.animation then 
 		player.animation:update(dt)
 	end
+	-- if player.isMoving == true
 	if player.isMoving then
 		player.moveTimer = math.min(player.moveTimer + dt, player.moveDuration)
 		local t = player.moveTimer / player.moveDuration
 
-		-- Manually pick the frame based on progress (t)
-    	-- If t is 0.5, it will show the middle frame
-    	-- local frameIndex = math.floor(t * (#player.animation.frames - 1)) + 1
-    	-- player.animation:gotoFrame(frameIndex)
-
-		-- 1. Fixed interpolation logic
 		player.x = player.startX + (player.targetX - player.startX) * t
 		player.y = player.startY + (player.targetY - player.startY) * t
 
@@ -37,10 +33,9 @@ function playerUpdate(dt)
 			world:update(player, player.x, player.y)
 			player.animation = animations.idle
 
-			-- 3. Check buffer
-			if player.bufferedInput then
-				local nextDir = player.bufferedInput
-				player.bufferedInput = nil
+			-- 3. Check buffer 
+			if #player.bufferedInput > 0 then
+				local nextDir = table.remove(player.bufferedInput, 1)
 				tryMove(nextDir)
 			end
 		end
@@ -55,7 +50,8 @@ function playerDraw()
 	-- player hitbox
 	-- love.graphics.rectangle("line", player.x, player.y, player.w, player.h)
 end
--- NEW: Use keypressed instead of polling in update to prevent double-moves
+
+-- runs only when a key is pressed not held
 function love.keypressed(key)
 	local dir = nil
 	if key == "d" or key == "right" then
@@ -68,11 +64,15 @@ function love.keypressed(key)
 		dir = "up"
 	end
 
+	-- if dir not nil or direction was passed
 	if dir then
+		-- if player.isMoving == false
 		if not player.isMoving then
 			tryMove(dir)
+		-- if player.isMoving == true
 		else
-			player.bufferedInput = dir
+			-- adds continous keypresses to a table
+			table.insert(player.bufferedInput, dir)
 		end
 	end
 end
@@ -84,13 +84,16 @@ function tryMove(dir)
 		player.flipX = 1
 	elseif dir == "left" then
 		dx = -player.tileSize
+		-- flip sprite
 		player.flipX = -1
 	elseif dir == "down" then
 		dy = player.tileSize
 	elseif dir == "up" then
+		-- convert direction into grid movement
 		dy = -player.tileSize
 	end
 
+	-- new player location
 	local goalX = player.x + dx
 	local goalY = player.y + dy
 
@@ -101,18 +104,23 @@ function tryMove(dir)
 	if len > 0 then
 		for i, col in ipairs(cols) do 
 			-- If we hit a stone, try to push it
+			-- col type == stone and stone.isMoving == false
 			if col.other.type == "stone" and not col.other.isMoving then 
 				if pushStone(col.other, dir) then 
+					-- if pushstone returns true, allow movement
 					canMove = true
 				else
+					-- if pushstone returns false, block movement
 					canMove = false
 				end
+			-- col.other.type is definitely not a stone
 			else
 				canMove = false
 			end
 		end
 	end
 
+	-- if canMove == true
 	if canMove then
 		player.startX, player.startY = player.x, player.y
 		player.targetX, player.targetY = goalX, goalY
@@ -120,9 +128,10 @@ function tryMove(dir)
 		player.isMoving = true
 
 		player.animation = animations.walk
+		--start walking animation from frame 1
 		player.animation:gotoFrame(1)
+	-- if canMove == false
 	else
-		player.bufferedInput = nil -- Clear buffer if we hit a wall
 		player.animation = animations.idle
 	end
 end
