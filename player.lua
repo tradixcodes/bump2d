@@ -98,7 +98,7 @@ function tryMove(dir)
 	local actualX, actualY, cols, len = world:check(player, goalX, goalY)
 
 	local canMove = true
-	if len > 0 then 
+	if len > 0 then
 		for i, col in ipairs(cols) do 
 			-- If we hit a stone, try to push it
 			if col.other.type == "stone" and not col.other.isMoving then 

@@ -62,6 +62,11 @@ function love.draw()
 	end
 	
 	cam:detach()
+
+	if not player.isMoving then 
+		love.graphics.print("Player pushing stone" , 10, 50)
+	end
+	
 	love.graphics.printf(
 		"Player Hitbox: " .. math.floor(player.x) .. ", " .. math.floor(player.y),
 		10,
@@ -70,7 +75,7 @@ function love.draw()
 		"left"
 	)
 	local fps = love.timer.getFPS()
-	love.graphics.print("FPS: " .. fps, 10, 20)
+	love.graphics.print("FPS: " .. fps, 10, 25)
 end
 
 -- (Keep your loadMap and spawnPlatform functions as they were)
